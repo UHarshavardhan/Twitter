@@ -1,48 +1,107 @@
-import { User, validateuser } from "../models/user.models";
+import { response } from "express";
+import { User, validateuser } from "../models/user.models.js";
 import lodash from "lodash";
+import pkg from 'bcryptjs';
+import { generateTokenAndSetCookie } from "../middleware/auth.middleware.js";
 
+const { compare, genSalt, hash } = pkg;
 
-const signup=async(req,res)=>{
-    
-   let email=await User.findOne({email:req.body.email});
-   if(email){
-    res.staus(401).send("Email already registered")
-   }
-
-    const {error}=validateuser(req.body);
-    if(error){
-        res.send(400).send(`Invalid ${error}`);
+const signup = async (req, res) => {
+    const { error } = validateuser(req.body);
+    if (error) {
+        return res.status(400).send(`Invalid ${error}`);
     }
-  const salt = await bycrypt.gensalt(10);
-  const hashedvalue= await bycrypt.hash(req.body.password,salt);
-  const number=Math.floor(Math.number*1000)
 
-try{
-    const user=new user({
-        ...req.body,
-        password:hashedvalue,
-        username:`req.body.fullname_${number}`
-    })
+    let email = await User.findOne({email:req.body.email });
+    if (email) {
+        return res.status(401).send("Email already registered");
+    }
 
-}
-catch(error){
-res.send(error.message);
-}
+    const salt = await genSalt(10);
+    const hashedvalue = await hash(req.body.password, salt); // Hash the user's password
+    const number = Math.floor(Math.random() * 1000); // Fixed random number generation
 
-}
-const login=async(req,res)=>{
-   const {email,password}=req.body
+    try {
+        const user = new User({
+            ...req.body,
+            password: hashedvalue,
+            username: `${req.body.username}_${number}`
+        });
 
-   let mail=User.findOne({email:email});
-  if(!mail){
-    res.status(402).send("User not registered")
+        await user.save(); // Save the user to the database
+       
+       
+        generateTokenAndSetCookie(user._id, res);
+
+        return res.status(201).json({
+            _id: user._id,
+            fullName: user.fullName,
+            username: user.username,
+            email: user.email,
+            followers: user.followers,
+            following: user.following,
+            profileImg: user.profileImg,
+            coverImg: user.coverImg,
+        });
+
+    } catch (error) {
+        return res.status(500).send(error.message);
+    }
+};
+
+const login = async (req, res) => {
+    const { email, password } = req.body;
+    console.log(req.body);
+    console.log({password});
+
+    let user = await User.findOne({ email: email }); 
+
+    const isPasswordCorrect = await compare(password, user?.password || ""); 
+
+    if (!user || !isPasswordCorrect) {
+        return res.status(400).send("Invalid email or password");
+    }
+
+    generateTokenAndSetCookie(user._id, res); 
+
+    return res.status(200).json({
+        _id: user._id,
+        fullName: user.fullName,
+        username: user.username,
+        email: user.email,
+        followers: user.followers,
+        following: user.following,
+        profileImg: user.profileImg,
+        coverImg: user.coverImg,
+    });
+  
+};
+
+const logout =async(req,res)=>{
+  try{
+     res.cookie("Jwt","",{maxage:0});
+     res.send(200).send("sucessfully logged out");
+
   }
-
+catch(error){
+  return res.status(500).send(error.message);
+}
 }
 
-    
-export{
-    signin,
+const getme= async(req,res)=>{
+  try{
+    const user = await User.findById(req.user._id).select("-password");
+    return res.status(200).json(user);
+  }
+  catch(error){
+    console.log("getme");
+    return res.status(500).send(error.message);
+  }
+}
+
+export {
     signup,
-    login
-}
+    login,
+    logout,
+    getme
+};

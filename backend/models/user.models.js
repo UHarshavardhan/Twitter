@@ -1,6 +1,9 @@
 import mongoose from "mongoose";
-import Joi, { valid } from "joi";
-import { JoiPasswordComplexity } from "joi-password-complexity";
+import Joi from "joi";
+import pkg from "joi-password-complexity";
+
+const {password} =pkg
+
 
 const userSchema = new mongoose.Schema(
 	{
@@ -9,7 +12,7 @@ const userSchema = new mongoose.Schema(
 			required: true,
 			unique: true,
 		},
-		fullName: {
+		fullname: {
 			type: String,
 			required: true,
 		},
@@ -68,10 +71,11 @@ const userSchema = new mongoose.Schema(
 const User = mongoose.model("User", userSchema);
 
 const validateuser=(User)=>{
-const validateschema = joi.Object({
-   fullName:joi.String.min(1).required(),
-   username:joi.String.min(6).max(16).required(),
-   email:joi.email.min(5).max(10).required(),
+const validateschema = 	Joi.object({
+   fullname:Joi.string().min(1).required(),
+   username:Joi.string().min(6).max(16).required(),
+   email:Joi.string().email().min(5).max(1000).required(),
+   password: Joi.string().min(5).max(50).required(),
 })
 return validateschema.validate(User)
 }
