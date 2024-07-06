@@ -4,10 +4,19 @@ import { mongoconnection } from "./db/mongo.js";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import userroutes from "./Routes/user.route.js"
+import { v2 as cloudinary } from "cloudinary";
 
 dotenv.config()
 const app=express();
 const port =process.env.port;
+
+cloudinary.config({ 
+      cloud_name: process.env.Cloud_name, 
+      api_key: process.env.Cloud_key, 
+      api_secret: process.env.Cloud_secret
+  });
+
+  
 
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
