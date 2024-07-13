@@ -28,7 +28,7 @@ const signup = async (req, res) => {
             username: `${req.body.username}_${number}`
         });
 
-        await user.save(); // Save the user to the database
+        await user.save(); 
        
        
         generateTokenAndSetCookie(user._id, res);
