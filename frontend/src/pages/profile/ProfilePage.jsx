@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import Posts from "../../components/common/Posts";
-import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
+import ProfileHeaderSkeleton from "../../components/common/skeletons/ProfileHeaderSkeleton" ;
 import EditProfileModal from "./EditProfileModal";
 
 import { POSTS } from "../../utils/db/dummy";
