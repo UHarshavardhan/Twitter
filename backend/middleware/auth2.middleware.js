@@ -1,30 +1,32 @@
-import { User  } from "../models/user.models.js";
-import Jwt from "jsonwebtoken";
+import { User } from "../models/user.models.js";
+import jwt from "jsonwebtoken";
 
-export const protectroute =async(req,res,next)=>{
+export const protectroute = async (req, res, next) => {
+  try {
 
-    try{
-    const token=req.cookies.Jwt ;
-    if(!token){
-        return res.status(404).send("Please login");
+    let token = req.cookies; 
+
+    if (!token) {
+      console.log("Token not found:", token);
+      return res.status(401).send("Please log in.");
     }
 
-    const authentication = Jwt.verify(token,process.env.JWT_SECRET);
-    if(!authentication){
-        return res.status(404).send("unauthorized user");
+    const authentication = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (!authentication) {
+      return res.status(401).send("Unauthorized user.");
     }
 
-    const user= await User.findById(authentication.userId).select("-password");
-    if(!user){
-       return res.status(400).send("not found");
+    const user = await User.findById(authentication.userId).select("-password");
+
+    if (!user) {
+      return res.status(404).send("User not found.");
     }
-    
-    req.user= user;
+
+    req.user = user;
     next();
-}
-catch(err){
-    console.log("auth2")
-    return res.status(500).send(err.message);
-}
-
-}
+  } catch (err) {
+    console.log("Authentication error:", err);
+    return res.status(500).send("Internal server error.");
+  }
+};

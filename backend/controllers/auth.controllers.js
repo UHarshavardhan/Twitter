@@ -32,6 +32,7 @@ const signup = async (req, res) => {
        
        
         generateTokenAndSetCookie(user._id, res);
+             console.log("function invocker")
 
         return res.status(201).json({
             _id: user._id,
@@ -59,10 +60,11 @@ const login = async (req, res) => {
     const isPasswordCorrect = await compare(password, user?.password || ""); 
 
     if (!user || !isPasswordCorrect) {
-        return res.status(400).send("Invalid email or password");
+        return res.status(400).json({message:"Invalid email or password"});
     }
 
     generateTokenAndSetCookie(user._id, res); 
+
 
     return res.status(200).json({
         _id: user._id,
@@ -79,7 +81,7 @@ const login = async (req, res) => {
 
 const logout =async(req,res)=>{
   try{
-     res.cookie("Jwt","",{maxage:0});
+     res.cookie("jwt","",{maxage:0});
      res.send(200).send("sucessfully logged out");
 
   }

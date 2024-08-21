@@ -2,8 +2,8 @@ import Post from "../models/post.model.js";
 import { v2 as cloudinary } from "cloudinary";
 import Notification from "../models/notificatio.model.js";
 import { User } from "../models/user.models.js";
-import { populate } from "dotenv";
-import { get } from "lodash";
+
+
 
 
 // Router.get("/all",protectroute,getallpost)
@@ -22,41 +22,42 @@ const allpost= await Post.find().sort({createdAt:-1}).populate({
 })
 
   if(!allpost){
-    res.status(200).json([]);
+    return res.status(200).json([]);
   }
-  res.status(200).json(allpost);
+   return res.status(200).json(allpost);
 }
 catch(err){
-    res.status(500).send({message:err.message});
+    return res.status(500).send({message:err.message});
 
 }
 }
 
 const following = async(req,res)=>{
-
+try{
     const userID =req.user._id;
-    const user= await User.findById(userID);
-    if(!user){
-        res.status(200).send("used not found");
+    const user = await User.findById(userID);
+    if (!user) {
+      return res.status(404).send("User not found");
     }
-   
-    const iamfollowing= user.following;
+    const following = user.following;
 
-    const followingpost= await Post.find({user:{$in:following}}).populate({
-        path:"user",
-        select:"-password"
-    })
-    .populate({
-        path:"comments.user",
-        select:"-select"
-    });
-    
-    if(following===''){
-        res.status(200).json([]);
-    }
+    const feedPosts = await Post.find({ user: { $in: following } })
+        .sort({ createdAt: -1 })
+        .populate({
+            path: "user",
+            select: "-password",
+        })
+        .populate({
+            path: "comments.user",
+            select: "-password",
+        });
 
-    res.status(200).json(followingpost);
- 
+
+    return res.status(200).json(feedPosts);
+     } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
 
 }
 
@@ -66,20 +67,20 @@ const following = async(req,res)=>{
 const getUserPosts= async(req,res)=>{
     const {username}=req.parms
    
-    const userid= await User.find({username:username}).select("-password");
+    const userid= await User.findOne({username:username}).select("-password");
         
     const getpost = await Post.find(userid._id).populate({
         path:"user",
         select:"-password"
 
     })
-    .polygon({
+    .populate({
         path:"comment.user",
         select:"-password"
     })
 
-    if(getpost===0){
-        res.status(200).json([]);
+    if(getpost.length===0){
+    return res.status(200).json([]);
     }
 
     res.status(200).json(getpost);
@@ -97,12 +98,12 @@ const createpost=async(req,res)=>{
  
 
  if(!user){
-    res.status(200).send("user not found");
+   return  res.status(200).send("user not found");
 
  }
 
  if(!text && !img){
-    res.send(400).send("text or img is empty ")
+    return res.send(400).send("text or img is empty ")
  }
 
  if(img){
@@ -117,7 +118,7 @@ const createpost=async(req,res)=>{
  })
 
  await newpost.save();
- res.status(200).send("sucessfully uploaded")
+ return res.status(200).send("sucessfully uploaded")
 
 }
 catch(err){
@@ -176,7 +177,7 @@ const Comment =async(req,res)=>{
     const post= await Post.findById(userID)
 
     if(!post){
-          res.status(400).send("post not fount");
+          res.status(400).send("post not found");
     }
     if(!text){
         res.status(400).send("Please enter the text");

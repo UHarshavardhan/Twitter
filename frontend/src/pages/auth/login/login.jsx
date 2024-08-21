@@ -25,7 +25,10 @@ const LoginPage = () => {
 		setIsError(false);
 		try {
 			setIsPending(true);
-			const response = await axios.post("http://localhost:8000/api/login", formData);
+			axios.post("http://localhost:8000/api/login", formData, {
+				withCredentials: true
+			});
+			
 			if (response.status === 200) {
 				toast.success("Login successful");
 				setTimeout(()=>{
